@@ -1,0 +1,660 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090a12">
+  <title>Neon Pulse — Rhythm Game</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #090a12;
+      color: #f5f4ff;
+      font-synthesis: none;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
+      overflow-x: hidden;
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(84, 56, 150, .2), transparent 54%),
+        #090a12;
+    }
+
+    button { font: inherit; }
+
+    .shell {
+      width: min(100% - 32px, 980px);
+      margin: 0 auto;
+      padding: 28px 0 30px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 22px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      border: 1px solid rgba(181, 154, 255, .36);
+      border-radius: 11px;
+      color: #c1a6ff;
+      background: rgba(144, 106, 255, .12);
+      box-shadow: 0 0 24px rgba(151, 105, 255, .18);
+      font-size: 18px;
+    }
+
+    .top-note {
+      color: #87869a;
+      font-size: 12px;
+      letter-spacing: .06em;
+    }
+
+    .game-card {
+      overflow: hidden;
+      border: 1px solid rgba(185, 176, 222, .14);
+      border-radius: 22px;
+      background: linear-gradient(145deg, rgba(20, 20, 34, .97), rgba(13, 14, 23, .98));
+      box-shadow: 0 24px 80px rgba(0, 0, 0, .34), 0 0 60px rgba(121, 82, 229, .06);
+    }
+
+    .game-head {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 16px;
+      padding: 18px 22px;
+      border-bottom: 1px solid rgba(185, 176, 222, .1);
+    }
+
+    .track-info { min-width: 0; }
+    .track-title { font-size: 15px; font-weight: 750; }
+    .track-subtitle { margin-top: 4px; color: #8c8a9e; font-size: 11px; }
+
+    .bpm {
+      padding: 7px 10px;
+      border: 1px solid rgba(168, 143, 255, .2);
+      border-radius: 999px;
+      color: #bca7ff;
+      background: rgba(143, 110, 255, .08);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .12em;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: flex-end;
+      gap: clamp(14px, 4vw, 32px);
+    }
+
+    .stat { min-width: 45px; text-align: right; }
+    .stat-label { color: #77768a; font-size: 9px; font-weight: 750; letter-spacing: .12em; }
+    .stat-value { margin-top: 3px; font-size: 16px; font-variant-numeric: tabular-nums; font-weight: 750; }
+    #score { color: #f3edff; }
+    #combo { color: #b6a0ff; }
+
+    .stage {
+      position: relative;
+      padding: 14px;
+      background:
+        radial-gradient(ellipse at 50% 75%, rgba(91, 64, 154, .11), transparent 55%),
+        #0b0c15;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: clamp(340px, 58vw, 510px);
+      border-radius: 12px;
+      background: #0c0d17;
+      touch-action: manipulation;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 14px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border-radius: 12px;
+      background: rgba(9, 10, 18, .66);
+      backdrop-filter: blur(7px);
+      transition: opacity .22s ease, visibility .22s ease;
+    }
+
+    .overlay.hidden { visibility: hidden; opacity: 0; pointer-events: none; }
+
+    .panel {
+      width: min(90%, 390px);
+      padding: 28px;
+      border: 1px solid rgba(197, 181, 255, .18);
+      border-radius: 18px;
+      background: rgba(19, 18, 31, .94);
+      box-shadow: 0 20px 70px rgba(0, 0, 0, .38);
+      text-align: center;
+    }
+
+    .eyebrow {
+      color: #ad91ff;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+    }
+
+    h1 { margin: 12px 0 9px; font-size: clamp(30px, 7vw, 42px); letter-spacing: -.055em; }
+    .description { max-width: 290px; margin: 0 auto; color: #a4a1b5; font-size: 13px; line-height: 1.65; }
+
+    .key-guide {
+      display: flex;
+      justify-content: center;
+      gap: 9px;
+      margin: 22px 0;
+    }
+
+    .key {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border: 1px solid rgba(186, 178, 212, .22);
+      border-radius: 10px;
+      color: #e7e2f5;
+      background: rgba(255, 255, 255, .04);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .primary {
+      width: 100%;
+      padding: 13px 18px;
+      border: 0;
+      border-radius: 11px;
+      color: #fff;
+      background: linear-gradient(110deg, #8b5cf6, #a855f7);
+      box-shadow: 0 8px 26px rgba(132, 85, 235, .26);
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 800;
+      transition: transform .15s ease, filter .15s ease;
+    }
+
+    .primary:hover { filter: brightness(1.12); transform: translateY(-1px); }
+    .primary:active { transform: translateY(1px); }
+
+    .result-score { margin: 7px 0 2px; color: #e7dbff; font-size: 38px; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .result-caption { color: #9290a4; font-size: 11px; }
+    .result-detail { margin: 14px 0 20px; color: #b9b5c8; font-size: 12px; line-height: 1.7; }
+
+    .help {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 20px 16px;
+      color: #77768b;
+      font-size: 10px;
+    }
+
+    .help strong { color: #b2aec3; font-weight: 650; }
+
+    @media (max-width: 560px) {
+      .shell { width: min(100% - 20px, 980px); padding-top: 18px; }
+      header { margin-bottom: 14px; }
+      .top-note { font-size: 10px; text-align: right; }
+      .game-head { grid-template-columns: 1fr auto; padding: 15px; }
+      .bpm { display: none; }
+      .stats { gap: 14px; }
+      .stage { padding: 8px; }
+      .overlay { inset: 8px; }
+      .help { padding: 12px; font-size: 9px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div class="brand"><span class="brand-mark" aria-hidden="true">♫</span> Afterglow Arcade</div>
+      <div class="top-note">A little rhythm goes a long way.</div>
+    </header>
+
+    <section class="game-card" aria-label="Neon Pulse rhythm game">
+      <div class="game-head">
+        <div class="track-info">
+          <div class="track-title">Neon Pulse</div>
+          <div class="track-subtitle">Original beat · 20 measures</div>
+        </div>
+        <div class="bpm">120 BPM</div>
+        <div class="stats" aria-live="polite">
+          <div class="stat"><div class="stat-label">SCORE</div><div class="stat-value" id="score">000000</div></div>
+          <div class="stat"><div class="stat-label">COMBO</div><div class="stat-value" id="combo">0×</div></div>
+        </div>
+      </div>
+      <div class="stage">
+        <canvas id="game" aria-label="Rhythm game playfield. Use D, F, J, and K to hit the notes." role="img"></canvas>
+        <div class="overlay" id="overlay">
+          <div class="panel" id="panel">
+            <div class="eyebrow">Find your flow</div>
+            <h1>Neon Pulse</h1>
+            <p class="description">Catch each note as it reaches the line. Stay on beat, build your combo, and light up the night.</p>
+            <div class="key-guide" aria-label="Lane keys: D, F, J, K">
+              <span class="key">D</span><span class="key">F</span><span class="key">J</span><span class="key">K</span>
+            </div>
+            <button class="primary" id="start">Start the beat</button>
+          </div>
+        </div>
+      </div>
+      <div class="help">
+        <span><strong>D · F · J · K</strong> to hit · tap a lane on mobile</span>
+        <span>Perfect ±60ms <strong>·</strong> Good ±150ms</span>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const canvas = document.querySelector("#game");
+      const ctx = canvas.getContext("2d");
+      const overlay = document.querySelector("#overlay");
+      const panel = document.querySelector("#panel");
+      const startButton = document.querySelector("#start");
+      const scoreDisplay = document.querySelector("#score");
+      const comboDisplay = document.querySelector("#combo");
+
+      const laneKeys = ["d", "f", "j", "k"];
+      const laneColors = ["#4de2d2", "#a986ff", "#ff70bd", "#ffc66d"];
+      const beatDuration = 0.5;
+      const approachDuration = 2;
+      const hitWindow = 0.2;
+      const songLength = 40;
+      const notes = [];
+      let audioContext;
+      let songStartAt = 0;
+      let gameTime = 0;
+      let animationFrame = 0;
+      let scheduler = 0;
+      let nextBeat = 0;
+      let mode = "ready";
+      let score = 0;
+      let combo = 0;
+      let maxCombo = 0;
+      let perfects = 0;
+      let goods = 0;
+      let misses = 0;
+      let feedback = "";
+      let feedbackUntil = 0;
+      let laneFlash = [0, 0, 0, 0];
+      let lastFrame = 0;
+      let width = 0;
+      let height = 0;
+      let pixelRatio = 1;
+
+      for (let beat = 0; beat < 80; beat += 1) {
+        if (beat % 4 === 0) notes.push({ time: beat * beatDuration, lane: Math.floor(beat / 4) % 4, judged: false });
+        if (beat % 4 === 2) notes.push({ time: beat * beatDuration, lane: (Math.floor(beat / 2) + 1) % 4, judged: false });
+        if (beat % 8 === 3) notes.push({ time: (beat + 0.5) * beatDuration, lane: (Math.floor(beat / 2) + 2) % 4, judged: false });
+        if (beat % 8 === 7) notes.push({ time: (beat + 0.5) * beatDuration, lane: (Math.floor(beat / 2) + 3) % 4, judged: false });
+      }
+
+      function resizeCanvas() {
+        const bounds = canvas.getBoundingClientRect();
+        pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+        width = bounds.width;
+        height = bounds.height;
+        canvas.width = Math.round(width * pixelRatio);
+        canvas.height = Math.round(height * pixelRatio);
+        ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+        draw();
+      }
+
+      function laneGeometry() {
+        const side = Math.max(12, width * 0.09);
+        const gap = 7;
+        const laneWidth = (width - side * 2 - gap * 3) / 4;
+        return { side, gap, laneWidth, top: 12, bottom: height - 23, hitY: height - 76 };
+      }
+
+      function roundedRect(x, y, w, h, r) {
+        const radius = Math.min(r, w / 2, h / 2);
+        ctx.beginPath();
+        ctx.roundRect(x, y, w, h, radius);
+      }
+
+      function draw() {
+        if (!width || !height) return;
+        const { side, gap, laneWidth, top, bottom, hitY } = laneGeometry();
+        ctx.clearRect(0, 0, width, height);
+
+        const backdrop = ctx.createLinearGradient(0, top, 0, bottom);
+        backdrop.addColorStop(0, "#0e0f1b");
+        backdrop.addColorStop(1, "#10101e");
+        ctx.fillStyle = backdrop;
+        ctx.fillRect(0, 0, width, height);
+
+        for (let lane = 0; lane < 4; lane += 1) {
+          const x = side + lane * (laneWidth + gap);
+          const active = laneFlash[lane] > gameTime;
+          roundedRect(x, top, laneWidth, bottom - top, 8);
+          ctx.fillStyle = active ? `${laneColors[lane]}16` : "rgba(255,255,255,0.018)";
+          ctx.fill();
+          ctx.strokeStyle = active ? `${laneColors[lane]}55` : "rgba(255,255,255,0.045)";
+          ctx.lineWidth = 1;
+          ctx.stroke();
+
+          ctx.setLineDash([3, 9]);
+          ctx.beginPath();
+          ctx.moveTo(x + laneWidth / 2, top + 8);
+          ctx.lineTo(x + laneWidth / 2, bottom - 7);
+          ctx.strokeStyle = "rgba(255,255,255,0.035)";
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          const keyY = bottom - 21;
+          roundedRect(x + laneWidth / 2 - 13, keyY - 12, 26, 22, 6);
+          ctx.fillStyle = active ? `${laneColors[lane]}35` : "rgba(255,255,255,0.055)";
+          ctx.fill();
+          ctx.fillStyle = active ? laneColors[lane] : "#77768b";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.font = "700 10px system-ui, sans-serif";
+          ctx.fillText(laneKeys[lane].toUpperCase(), x + laneWidth / 2, keyY - 1);
+        }
+
+        ctx.save();
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = "rgba(205, 184, 255, 0.5)";
+        ctx.fillStyle = "rgba(205, 184, 255, 0.82)";
+        roundedRect(side - 2, hitY, width - side * 2 + 4, 2, 1);
+        ctx.fill();
+        ctx.restore();
+
+        for (const note of notes) {
+          if (note.judged) continue;
+          const untilHit = note.time - gameTime;
+          if (untilHit > approachDuration || untilHit < -hitWindow) continue;
+          const x = side + note.lane * (laneWidth + gap);
+          const noteY = hitY - untilHit / approachDuration * (hitY - top - 15);
+          const noteHeight = Math.max(13, laneWidth * 0.22);
+          const noteX = x + 7;
+          const noteW = laneWidth - 14;
+          ctx.save();
+          ctx.shadowBlur = 18;
+          ctx.shadowColor = `${laneColors[note.lane]}88`;
+          const noteGradient = ctx.createLinearGradient(noteX, noteY, noteX + noteW, noteY);
+          noteGradient.addColorStop(0, laneColors[note.lane]);
+          noteGradient.addColorStop(1, `${laneColors[note.lane]}bb`);
+          roundedRect(noteX, noteY - noteHeight / 2, noteW, noteHeight, 6);
+          ctx.fillStyle = noteGradient;
+          ctx.fill();
+          ctx.restore();
+          roundedRect(noteX + 4, noteY - noteHeight / 2 + 2, Math.max(0, noteW - 8), 2, 1);
+          ctx.fillStyle = "rgba(255,255,255,0.42)";
+          ctx.fill();
+        }
+
+        if (feedback && gameTime < feedbackUntil) {
+          const alpha = Math.min(1, (feedbackUntil - gameTime) * 2.5);
+          ctx.globalAlpha = alpha;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.font = "800 14px system-ui, sans-serif";
+          ctx.fillStyle = feedback === "MISS" ? "#ff708d" : "#f1e8ff";
+          ctx.fillText(feedback, width / 2, hitY - 31);
+          ctx.globalAlpha = 1;
+        }
+
+        if (mode === "playing") {
+          const progress = Math.max(0, Math.min(1, gameTime / songLength));
+          ctx.fillStyle = "rgba(255,255,255,0.07)";
+          ctx.fillRect(side, height - 8, width - side * 2, 2);
+          ctx.fillStyle = "#a986ff";
+          ctx.fillRect(side, height - 8, (width - side * 2) * progress, 2);
+        }
+      }
+
+      function updateStats() {
+        scoreDisplay.textContent = String(score).padStart(6, "0");
+        comboDisplay.textContent = `${combo}×`;
+      }
+
+      function reportJudgment(label) {
+        feedback = label;
+        feedbackUntil = gameTime + 0.55;
+      }
+
+      function hitLane(lane) {
+        if (mode !== "playing") return;
+        laneFlash[lane] = gameTime + 0.12;
+        let candidate = null;
+        let closest = Infinity;
+
+        for (const note of notes) {
+          if (note.judged || note.lane !== lane) continue;
+          const difference = Math.abs(note.time - gameTime);
+          if (difference < closest) {
+            closest = difference;
+            candidate = note;
+          }
+        }
+
+        if (!candidate || closest > hitWindow) return;
+        candidate.judged = true;
+        combo += 1;
+        maxCombo = Math.max(maxCombo, combo);
+
+        if (closest <= 0.06) {
+          score += 1000 + Math.min(combo, 100) * 10;
+          perfects += 1;
+          reportJudgment("PERFECT");
+        } else {
+          score += 600 + Math.min(combo, 100) * 5;
+          goods += 1;
+          reportJudgment("GOOD");
+        }
+        updateStats();
+      }
+
+      function registerMiss(note) {
+        note.judged = true;
+        combo = 0;
+        misses += 1;
+        reportJudgment("MISS");
+        updateStats();
+      }
+
+      function kick(time, frequency) {
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(frequency, time);
+        oscillator.frequency.exponentialRampToValueAtTime(38, time + 0.12);
+        gain.gain.setValueAtTime(0.65, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.16);
+        oscillator.connect(gain);
+        gain.connect(audioContext.destination);
+        oscillator.start(time);
+        oscillator.stop(time + 0.17);
+      }
+
+      function tone(time, frequency, duration, volume, type) {
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, time);
+        gain.gain.setValueAtTime(volume, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+        oscillator.connect(gain);
+        gain.connect(audioContext.destination);
+        oscillator.start(time);
+        oscillator.stop(time + duration);
+      }
+
+      function hat(time, volume) {
+        const bufferSize = Math.ceil(audioContext.sampleRate * 0.055);
+        const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let index = 0; index < bufferSize; index += 1) data[index] = Math.random() * 2 - 1;
+        const source = audioContext.createBufferSource();
+        const filter = audioContext.createBiquadFilter();
+        const gain = audioContext.createGain();
+        source.buffer = buffer;
+        filter.type = "highpass";
+        filter.frequency.value = 7500;
+        gain.gain.setValueAtTime(volume, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.045);
+        source.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioContext.destination);
+        source.start(time);
+        source.stop(time + 0.05);
+      }
+
+      function scheduleBeat(beat, time) {
+        if (beat % 4 === 0) kick(time, 125);
+        else if (beat % 4 === 2) {
+          kick(time, 90);
+          tone(time, 185, 0.12, 0.11, "triangle");
+        } else {
+          tone(time, beat % 2 ? 190 : 220, 0.09, 0.045, "triangle");
+        }
+        hat(time, beat % 2 === 0 ? 0.12 : 0.075);
+        hat(time + beatDuration / 2, 0.045);
+      }
+
+      function startScheduler() {
+        nextBeat = 0;
+        scheduler = window.setInterval(() => {
+          while (nextBeat < 80 && songStartAt + nextBeat * beatDuration < audioContext.currentTime + 0.12) {
+            scheduleBeat(nextBeat, songStartAt + nextBeat * beatDuration);
+            nextBeat += 1;
+          }
+        }, 25);
+      }
+
+      function stopAudio() {
+        if (scheduler) window.clearInterval(scheduler);
+        scheduler = 0;
+      }
+
+      async function startGame() {
+        try {
+          if (!audioContext || audioContext.state === "closed") {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          }
+          await audioContext.resume();
+        } catch (error) {
+          console.error("Unable to start audio playback:", error);
+          panel.querySelector(".description").textContent = "Audio could not start. Check your browser's sound settings and try again.";
+          return;
+        }
+
+        stopAudio();
+        notes.forEach(note => { note.judged = false; });
+        score = 0;
+        combo = 0;
+        maxCombo = 0;
+        perfects = 0;
+        goods = 0;
+        misses = 0;
+        feedback = "";
+        laneFlash = [0, 0, 0, 0];
+        updateStats();
+        gameTime = -0.15;
+        mode = "playing";
+        songStartAt = audioContext.currentTime + 0.15;
+        startScheduler();
+        overlay.classList.add("hidden");
+        lastFrame = 0;
+        cancelAnimationFrame(animationFrame);
+        animationFrame = requestAnimationFrame(frame);
+      }
+
+      function finishGame() {
+        mode = "ended";
+        stopAudio();
+        const accuracy = perfects + goods + misses
+          ? Math.round((perfects + goods) / (perfects + goods + misses) * 100)
+          : 0;
+        const rank = accuracy >= 95 ? "S" : accuracy >= 85 ? "A" : accuracy >= 70 ? "B" : accuracy >= 50 ? "C" : "D";
+        panel.innerHTML = `
+          <div class="eyebrow">Track complete · rank ${rank}</div>
+          <h1>Nice run.</h1>
+          <div class="result-score">${String(score).padStart(6, "0")}</div>
+          <div class="result-caption">TOTAL SCORE</div>
+          <p class="result-detail">${accuracy}% accuracy · ${perfects} perfect · ${goods} good · ${misses} missed<br>Best combo: ${maxCombo}×</p>
+          <button class="primary" id="restart">Play again</button>
+        `;
+        document.querySelector("#restart").addEventListener("click", startGame);
+        overlay.classList.remove("hidden");
+        draw();
+      }
+
+      function frame(timestamp) {
+        if (mode !== "playing") return;
+        if (!lastFrame) lastFrame = timestamp;
+        lastFrame = timestamp;
+        gameTime = audioContext.currentTime - songStartAt;
+
+        for (const note of notes) {
+          if (!note.judged && gameTime > note.time + hitWindow) registerMiss(note);
+        }
+
+        draw();
+        if (gameTime >= songLength + 0.3) {
+          finishGame();
+          return;
+        }
+        animationFrame = requestAnimationFrame(frame);
+      }
+
+      document.addEventListener("keydown", event => {
+        const lane = laneKeys.indexOf(event.key.toLowerCase());
+        if (lane !== -1 && !event.repeat) {
+          event.preventDefault();
+          hitLane(lane);
+        }
+      });
+
+      canvas.addEventListener("pointerdown", event => {
+        if (mode !== "playing") return;
+        const bounds = canvas.getBoundingClientRect();
+        const x = event.clientX - bounds.left;
+        const { side, gap, laneWidth } = laneGeometry();
+        const lane = Math.floor((x - side) / (laneWidth + gap));
+        if (lane >= 0 && lane < 4 && x <= side + lane * (laneWidth + gap) + laneWidth) hitLane(lane);
+      });
+
+      startButton.addEventListener("click", startGame);
+      window.addEventListener("resize", resizeCanvas);
+      resizeCanvas();
+    })();
+  </script>
+</body>
+</html>
